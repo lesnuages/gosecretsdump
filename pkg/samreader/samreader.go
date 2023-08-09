@@ -300,6 +300,7 @@ func NewSamHashAES(b []byte) SAMHashAES {
 }
 
 func (d SamReader) Dump() error {
+	defer close(d.userData)
 	boot, err := d.SysKey()
 	if err != nil {
 		return err
@@ -346,6 +347,5 @@ func (d SamReader) Dump() error {
 			Rid:      rid,
 		}
 	}
-	close(d.userData)
 	return nil
 }
