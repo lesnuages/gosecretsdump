@@ -1,4 +1,4 @@
-module github.com/C-Sto/gosecretsdump
+module github.com/lesnuages/gosecretsdump
 
 go 1.10
 
