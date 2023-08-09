@@ -6,8 +6,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/C-Sto/gosecretsdump/pkg/ditreader"
-	"github.com/C-Sto/gosecretsdump/pkg/samreader"
+	"github.com/lesnuages/gosecretsdump/pkg/ditreader"
+	"github.com/lesnuages/gosecretsdump/pkg/samreader"
 )
 
 type Dumper interface {

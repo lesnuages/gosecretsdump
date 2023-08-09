@@ -5,18 +5,18 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/C-Sto/gosecretsdump/pkg/winregistry"
+	"github.com/lesnuages/gosecretsdump/pkg/winregistry"
 	"golang.org/x/text/encoding/unicode"
 )
 
-//SystemReader provides an interface to get goodies from a SYSTEM file.
+// SystemReader provides an interface to get goodies from a SYSTEM file.
 type SystemReader struct {
 	systemLoc string
 	bootKey   []byte
 	registry  winregistry.WinRegIF
 }
 
-//New creates a new SystemReader pointing at the specified file.
+// New creates a new SystemReader pointing at the specified file.
 func New(s string) (SystemReader, error) {
 	var err error
 	r := SystemReader{systemLoc: s}
@@ -34,16 +34,16 @@ func NewLive() (SystemReader, error) {
 	return r, err
 }
 
-//BootKey returns the bootkey extracted from the SYSTEM file
-func (l *SystemReader) BootKey() []byte {
+// BootKey returns the bootkey extracted from the SYSTEM file
+func (l *SystemReader) BootKey() ([]byte, error) {
 	b, e := l.getBootKey()
 	if e != nil {
-		panic(e)
+		return nil, e
 	}
 	if len(b) == 0 {
-		panic("NO BOOTKEY?")
+		return nil, fmt.Errorf("NO BOOTKEY?")
 	}
-	return b
+	return b, nil
 }
 
 func (l *SystemReader) getBootKey() (bk []byte, err error) {
@@ -77,7 +77,7 @@ func (l *SystemReader) getBootKey() (bk []byte, err error) {
 	return bk, nil
 }
 
-//HasNoLMHashPolicy returns true if no LM hashes are allowed per the SYSTEM file. A False response indicates that LM hashes may exist within the domain/machine.
+// HasNoLMHashPolicy returns true if no LM hashes are allowed per the SYSTEM file. A False response indicates that LM hashes may exist within the domain/machine.
 func (l SystemReader) HasNoLMHashPolicy() bool {
 	//winreg := winregistry.WinregRegistry{}.Init(l.systemLoc, false)
 	_, bcurrentControlSet, err := l.registry.GetVal("\\Select\\Current")

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/C-Sto/gosecretsdump/cmd"
+	"github.com/lesnuages/gosecretsdump/cmd"
 )
 
 var version string

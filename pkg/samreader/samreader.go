@@ -10,14 +10,14 @@ import (
 	"os"
 	"strings"
 
-	"github.com/C-Sto/gosecretsdump/pkg/systemreader"
-	"github.com/C-Sto/gosecretsdump/pkg/winregistry"
+	"github.com/lesnuages/gosecretsdump/pkg/systemreader"
+	"github.com/lesnuages/gosecretsdump/pkg/winregistry"
 	"golang.org/x/text/encoding/unicode"
 
-	"github.com/C-Sto/gosecretsdump/pkg/ditreader"
+	"github.com/lesnuages/gosecretsdump/pkg/ditreader"
 )
 
-//New Creates a new dit dumper
+// New Creates a new dit dumper
 func New(system, sam string) (SamReader, error) {
 	r := SamReader{
 		noLMHash:           true,
@@ -34,7 +34,10 @@ func New(system, sam string) (SamReader, error) {
 		if err != nil {
 			return r, err
 		}
-		r.bootKey = ls.BootKey()
+		r.bootKey, err = ls.BootKey()
+		if err != nil {
+			return r, err
+		}
 		r.noLMHash = ls.HasNoLMHashPolicy()
 	} else {
 		return r, fmt.Errorf("System hive empty")
@@ -55,7 +58,10 @@ func NewLive() (SamReader, error) {
 	if err != nil {
 		return r, err
 	}
-	r.bootKey = ls.BootKey()
+	r.bootKey, err = ls.BootKey()
+	if err != nil {
+		return r, err
+	}
 	r.noLMHash = ls.HasNoLMHashPolicy()
 	return r, err
 }
@@ -75,7 +81,7 @@ func (d *SamReader) dump() {
 	d.Dump()
 }
 
-//GetOutChan returns a reference to the objects output channel for read only operations
+// GetOutChan returns a reference to the objects output channel for read only operations
 func (d SamReader) GetOutChan() <-chan ditreader.DumpedHash {
 	return d.userData
 }
@@ -139,11 +145,10 @@ func NewF(b []byte) Domain_Account_F {
 	return r
 }
 
-func (d SamReader) SysKey() []byte {
-	r := []byte{}
+func (d SamReader) SysKey() ([]byte, error) {
 	_, fraw, err := d.registry.GetVal("\\SAM\\Domains\\Account\\F")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	f := NewF(fraw)
 	if f.Revision == 3 {
@@ -153,9 +158,9 @@ func (d SamReader) SysKey() []byte {
 		cipher := aesStruct.Data[:aesStruct.DataLen]
 		b, e := ditreader.DecryptAES(d.bootKey, cipher, iv)
 		if e != nil {
-			panic(e)
+			return nil, e
 		}
-		return b[:16]
+		return b[:16], nil
 	} else if f.Revision == 2 {
 		rc4struct := SAMKeyData{}
 		binary.Read(bytes.NewReader(f.Data), binary.LittleEndian, &rc4struct)
@@ -165,7 +170,7 @@ func (d SamReader) SysKey() []byte {
 		rc4Key := md5.Sum(hashdata)
 		rc4life, e := rc4.NewCipher(rc4Key[:])
 		if e != nil {
-			panic(e)
+			return nil, e
 		}
 		d := make([]byte, 32)
 		rc4life.XORKeyStream(d, append(rc4struct.Key[:], rc4struct.Checksum[:]...))
@@ -177,11 +182,10 @@ func (d SamReader) SysKey() []byte {
 		   if checkSum != self.__hashedBootKey[16:]:
 		       raise Exception('hashedBootKey CheckSum failed, Syskey startup password probably in use! :(')
 		*/
-		return d[:16]
+		return d[:16], nil
 	} else {
-		panic("not yet implemented")
+		return nil, fmt.Errorf("not yet implemented")
 	}
-	return r
 }
 
 var qwertyconst = []byte("!@#$%^&*()qwertyUIOPAzxcvbnmQQQQQQQQQQQQ)(*@&%\x00")
@@ -296,7 +300,10 @@ func NewSamHashAES(b []byte) SAMHashAES {
 }
 
 func (d SamReader) Dump() error {
-	boot := d.SysKey()
+	boot, err := d.SysKey()
+	if err != nil {
+		return err
+	}
 	rids, _ := d.GetRids()
 	for _, rid := range rids {
 		v, err := d.parseV(rid)

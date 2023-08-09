@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/C-Sto/gosecretsdump/pkg/ditreader"
+	"github.com/lesnuages/gosecretsdump/pkg/ditreader"
 )
 
 func TestProgram(t *testing.T) {

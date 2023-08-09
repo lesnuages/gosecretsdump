@@ -8,12 +8,12 @@ import (
 	"os"
 	"sync"
 
-	"github.com/C-Sto/gosecretsdump/pkg/systemreader"
+	"github.com/lesnuages/gosecretsdump/pkg/systemreader"
 
-	"github.com/C-Sto/gosecretsdump/pkg/esent"
+	"github.com/lesnuages/gosecretsdump/pkg/esent"
 )
 
-//New Creates a new dit dumper
+// New Creates a new dit dumper
 func New(system, ntds string) (DitReader, error) {
 	r := DitReader{
 		isRemote:           false,
@@ -88,7 +88,7 @@ func (d *DitReader) dump() {
 	d.Dump()
 }
 
-//GetOutChan returns a reference to the objects output channel for read only operations
+// GetOutChan returns a reference to the objects output channel for read only operations
 func (d DitReader) GetOutChan() <-chan DumpedHash {
 	return d.userData
 }
@@ -100,7 +100,10 @@ func (d DitReader) Dump() error {
 		if err != nil {
 			return err
 		}
-		d.bootKey = ls.BootKey()
+		d.bootKey, err = ls.BootKey()
+		if err != nil {
+			return err
+		}
 		if d.ntdsFileLocation != "" {
 			d.noLMHash = ls.HasNoLMHashPolicy()
 		}
